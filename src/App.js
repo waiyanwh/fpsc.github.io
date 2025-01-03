@@ -3,7 +3,7 @@ import React from 'react';
 
 function App() {
   const [darkMode, setDarkMode] = React.useState(false);
-  const [riskInputType, setRiskInputType] = React.useState('dollar');
+  const [riskInputType, setRiskInputType] = React.useState('usd');
   const [riskAmount, setRiskAmount] = React.useState('');
   const [stopLossValue, setStopLossValue] = React.useState('');
   const [stopLossUnit, setStopLossUnit] = React.useState('ticks');
@@ -29,7 +29,7 @@ function App() {
 
     let stopLossTicks, stopLossPoints, riskDollars;
 
-    if (riskInputType === 'dollar') {
+    if (riskInputType === 'usd') {
       riskDollars = parseFloat(riskAmount);
       stopLossTicks = (riskDollars / contracts) / tickValue;
       stopLossPoints = stopLossTicks / ticksPerPoint;
@@ -181,7 +181,7 @@ function App() {
                   </div>
                 </div>
 
-                {riskInputType === 'dollar' ? (
+                {riskInputType === 'usd' ? (
                   <div className="mb-4">
                     <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Risk Amount ($)
@@ -193,7 +193,7 @@ function App() {
                       className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${
                         darkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-white text-gray-700 border-gray-300'
                       }`}
-                      placeholder="Enter amount to risk"
+                      placeholder="Enter USD($) amount to risk"
                     />
                   </div>
                 ) : (
