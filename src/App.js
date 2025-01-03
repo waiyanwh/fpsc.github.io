@@ -1,84 +1,95 @@
 import './App.css';
 import React from 'react';
+import lightBg from './assets/light-bg.jpg';
+import darkBg from './assets/dark-bg.jpg';
 
-function App() {
-  const [darkMode, setDarkMode] = React.useState(false);
-  const [riskInputType, setRiskInputType] = React.useState('usd');
-  const [riskAmount, setRiskAmount] = React.useState('');
-  const [stopLossValue, setStopLossValue] = React.useState('');
-  const [stopLossUnit, setStopLossUnit] = React.useState('ticks');
-  const [contractSize, setContractSize] = React.useState('1');
-  const [contractType, setContractType] = React.useState('micro');
-  const [riskReward, setRiskReward] = React.useState('1');
-  const [results, setResults] = React.useState(null);
+function ResultsCard({ title, points, ticks, amount, isProfit }) {
+  const [darkMode] = React.useState(false);
 
-  // Background images (replace these URLs with your preferred images)
-  const lightBg = "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=2070&auto=format&fit=crop";
-  const darkBg = "https://images.unsplash.com/photo-1605792657660-596af9009e82?q=80&w=2002&auto=format&fit=crop";
-
-  const getContractValues = (type) => {
-    return type === 'micro' 
-      ? { tickValue: 0.5, pointValue: 2 } 
-      : { tickValue: 5, pointValue: 20 };
-  };
-
-  const calculatePositions = () => {
-    const { tickValue, pointValue } = getContractValues(contractType);
-    const ticksPerPoint = 4;
-    const contracts = parseFloat(contractSize) || 1;
-
-    let stopLossTicks, stopLossPoints, riskDollars;
-
-    if (riskInputType === 'usd') {
-      riskDollars = parseFloat(riskAmount);
-      stopLossTicks = (riskDollars / contracts) / tickValue;
-      stopLossPoints = stopLossTicks / ticksPerPoint;
-    } else {
-      if (stopLossUnit === 'ticks') {
-        stopLossTicks = parseFloat(stopLossValue);
-        stopLossPoints = stopLossTicks / ticksPerPoint;
-      } else {
-        stopLossPoints = parseFloat(stopLossValue);
-        stopLossTicks = stopLossPoints * ticksPerPoint;
-      }
-      riskDollars = stopLossTicks * tickValue * contracts;
-    }
-
-    const takeProfitAmount = riskDollars * parseFloat(riskReward);
-    const takeProfitTicks = (takeProfitAmount / contracts) / tickValue;
-    const takeProfitPoints = takeProfitTicks / ticksPerPoint;
-
-    setResults({
-      stopLossTicks,
-      stopLossPoints,
-      stopLossAmount: riskDollars,
-      takeProfitAmount,
-      takeProfitTicks,
-      takeProfitPoints
-    });
-  };
-
-  const ResultsCard = ({ title, points, ticks, amount, isProfit }) => (
-    <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-4 shadow-md backdrop-blur-sm bg-opacity-90`}>
-      <h4 className={`text-lg font-semibold mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{title}</h4>
-      <div className="grid grid-cols-3 gap-2 text-sm">
-        <div>
-          <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Points:</p>
-          <p className={`font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{points.toFixed(2)}</p>
-        </div>
-        <div>
-          <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Ticks:</p>
-          <p className={`font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{ticks.toFixed(2)}</p>
-        </div>
-        <div>
-          <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Amount:</p>
-          <p className={`font-medium ${isProfit ? 'text-green-500' : 'text-red-500'}`}>
-            ${amount.toFixed(2)}
-          </p>
-        </div>
+  return (
+    <div className={`p-4 rounded-lg ${
+      isProfit 
+        ? darkMode ? 'bg-green-900/30' : 'bg-green-50' 
+        : darkMode ? 'bg-red-900/30' : 'bg-red-50'
+    }`}>
+      <h4 className={`text-lg font-semibold mb-2 ${
+        isProfit 
+          ? darkMode ? 'text-green-400' : 'text-green-700'
+          : darkMode ? 'text-red-400' : 'text-red-700'
+      }`}>
+        {title}
+      </h4>
+      <div className={`grid grid-cols-1 gap-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+        <p>Points: {points}</p>
+        <p>Ticks: {ticks}</p>
+        <p className="font-semibold">${amount.toFixed(2)}</p>
       </div>
     </div>
   );
+}
+
+function App() {
+  const [darkMode, setDarkMode] = React.useState(false);
+  const [contractType, setContractType] = React.useState('NQ Mini');
+  const [contractSize, setContractSize] = React.useState(1);
+  const [riskInputType, setRiskInputType] = React.useState('dollar');
+  const [riskAmount, setRiskAmount] = React.useState('');
+  const [stopLossDistance, setStopLossDistance] = React.useState('');
+  const [riskRewardRatio, setRiskRewardRatio] = React.useState('1');
+  const [results, setResults] = React.useState(null);
+
+  // // For demo purposes, using placeholder images
+  // const lightBg = "https://placehold.co/1920x1080/e2e8f0/e2e8f0";
+  // const darkBg = "https://placehold.co/1920x1080/1a202c/1a202c";
+
+  const contractValues = {
+    'NQ Mini': { pointValue: 20, tickValue: 5 },
+    'NQ Micro': { pointValue: 2, tickValue: 0.5 },
+    'ES Mini': { pointValue: 50, tickValue: 12.50 },
+    'ES Micro': { pointValue: 5, tickValue: 1.25 }
+  };
+
+  const riskRewardOptions = [
+    { label: '1:1', value: '1' },
+    { label: '1:2', value: '2' },
+    { label: '1:3', value: '3' },
+    { label: '1:4', value: '4' },
+    { label: '1:5', value: '5' }
+  ];
+
+  const calculatePositions = () => {
+    let stopLossPoints, stopLossTicks, stopLossAmount;
+
+    if (riskInputType === 'dollar') {
+      const riskAmountNum = parseFloat(riskAmount);
+      stopLossAmount = riskAmountNum;
+      stopLossPoints = riskAmountNum / (contractValues[contractType].pointValue * contractSize);
+      stopLossTicks = stopLossPoints * 4;
+    } else if (riskInputType === 'points') {
+      const distanceNum = parseFloat(stopLossDistance);
+      stopLossPoints = distanceNum;
+      stopLossTicks = distanceNum * 4;
+      stopLossAmount = stopLossPoints * contractValues[contractType].pointValue * contractSize;
+    } else { // ticks
+      const ticksNum = parseFloat(stopLossDistance);
+      stopLossTicks = ticksNum;
+      stopLossPoints = ticksNum / 4;
+      stopLossAmount = stopLossTicks * contractValues[contractType].tickValue * contractSize;
+    }
+
+    const takeProfitPoints = stopLossPoints * parseFloat(riskRewardRatio);
+    const takeProfitTicks = takeProfitPoints * 4;
+    const takeProfitAmount = stopLossAmount * parseFloat(riskRewardRatio);
+
+    setResults({
+      stopLossPoints: stopLossPoints.toFixed(2),
+      stopLossTicks: stopLossTicks.toFixed(2),
+      stopLossAmount,
+      takeProfitPoints: takeProfitPoints.toFixed(2),
+      takeProfitTicks: takeProfitTicks.toFixed(2),
+      takeProfitAmount
+    });
+  };
 
   return (
     <div 
@@ -90,10 +101,11 @@ function App() {
         backgroundAttachment: 'fixed'
       }}
     >
-      <div className="relative py-3 sm:max-w-xl sm:mx-auto">
-        <div className={`relative px-4 py-10 ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg sm:rounded-3xl sm:p-20 backdrop-blur-sm bg-opacity-90`}>
-          <div className="max-w-md mx-auto">
-            <div className="absolute top-4 right-4">
+      <div className="relative py-3 mx-auto w-full max-w-6xl px-4 flex flex-col md:flex-row gap-6">
+        {/* Calculator Input Form */}
+        <div className={`md:w-1/2 ${darkMode ? 'bg-gray-800/90' : 'bg-white/90'} shadow-lg rounded-3xl p-8 backdrop-blur-sm`}>
+          <div className="relative">
+            <div className="absolute top-0 right-0">
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className={`p-2 rounded-full ${darkMode ? 'bg-yellow-400 text-gray-900' : 'bg-gray-800 text-yellow-400'}`}
@@ -102,195 +114,149 @@ function App() {
               </button>
             </div>
 
-            <div className="divide-y divide-gray-200">
-              <div className="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
-                <h2 className={`text-2xl font-bold mb-8 text-center ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-                  Future Position Size Calculator
-                </h2>
+            <h2 className={`text-2xl font-bold mb-8 text-center ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+              Futures Position Size Calculator
+            </h2>
 
-                <div className="mb-4">
-                  <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Contract Type
-                  </label>
-                  <div className="flex gap-4">
-                    <label className="inline-flex items-center">
-                      <input
-                        type="radio"
-                        value="micro"
-                        checked={contractType === 'micro'}
-                        onChange={(e) => setContractType(e.target.value)}
-                        className="form-radio h-4 w-4 text-blue-600"
-                      />
-                      <span className={`ml-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Micro ($2/point)</span>
-                    </label>
-                    <label className="inline-flex items-center">
-                      <input
-                        type="radio"
-                        value="mini"
-                        checked={contractType === 'mini'}
-                        onChange={(e) => setContractType(e.target.value)}
-                        className="form-radio h-4 w-4 text-blue-600"
-                      />
-                      <span className={`ml-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Mini ($20/point)</span>
-                    </label>
-                  </div>
-                </div>
+            <div className="space-y-4">
+              <div>
+                <label className={`block mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Contract Type
+                </label>
+                <select
+                  value={contractType}
+                  onChange={(e) => setContractType(e.target.value)}
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="NQ Mini">NQ Mini</option>
+                  <option value="NQ Micro">NQ Micro</option>
+                  <option value="ES Mini">ES Mini</option>
+                  <option value="ES Micro">ES Micro</option>
+                </select>
+              </div>
 
-                <div className="mb-4">
-                  <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Contract Size
+              <div>
+                <label className={`block mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Contract Size
+                </label>
+                <input
+                  type="number"
+                  value={contractSize}
+                  onChange={(e) => setContractSize(e.target.value)}
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  min="1"
+                />
+              </div>
+
+              <div>
+                <label className={`block mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Risk Input Type
+                </label>
+                <select
+                  value={riskInputType}
+                  onChange={(e) => setRiskInputType(e.target.value)}
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="dollar">Dollar Amount ($)</option>
+                  <option value="points">Movement (Points)</option>
+                  <option value="ticks">Movement (Ticks)</option>
+                </select>
+              </div>
+
+              {riskInputType === 'dollar' ? (
+                <div>
+                  <label className={`block mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Risk Amount ($)
                   </label>
                   <input
                     type="number"
-                    min="1"
-                    step="1"
-                    value={contractSize}
-                    onChange={(e) => setContractSize(e.target.value)}
-                    className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${
-                      darkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-white text-gray-700 border-gray-300'
-                    }`}
-                    placeholder="Enter number of contracts"
+                    value={riskAmount}
+                    onChange={(e) => setRiskAmount(e.target.value)}
+                    className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-
-                <div className="mb-4">
-                  <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Risk Input Type
+              ) : (
+                <div>
+                  <label className={`block mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Stop Loss ({riskInputType === 'points' ? 'Points' : 'Ticks'})
                   </label>
-                  <div className="flex gap-4">
-                    <label className="inline-flex items-center">
-                      <input
-                        type="radio"
-                        value="usd"
-                        checked={riskInputType === 'usd'}
-                        onChange={(e) => setRiskInputType(e.target.value)}
-                        className="form-radio h-4 w-4 text-blue-600"
-                      />
-                      <span className={`ml-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>USD</span>
-                    </label>
-                    <label className="inline-flex items-center">
-                      <input
-                        type="radio"
-                        value="movement"
-                        checked={riskInputType === 'movement'}
-                        onChange={(e) => setRiskInputType(e.target.value)}
-                        className="form-radio h-4 w-4 text-blue-600"
-                      />
-                      <span className={`ml-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Movement</span>
-                    </label>
-                  </div>
+                  <input
+                    type="number"
+                    value={stopLossDistance}
+                    onChange={(e) => setStopLossDistance(e.target.value)}
+                    className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
+              )}
 
-                {riskInputType === 'usd' ? (
-                  <div className="mb-4">
-                    <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      Risk Amount ($)
-                    </label>
-                    <input
-                      type="number"
-                      value={riskAmount}
-                      onChange={(e) => setRiskAmount(e.target.value)}
-                      className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${
-                        darkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-white text-gray-700 border-gray-300'
-                      }`}
-                      placeholder="Enter USD($) amount to risk"
-                    />
-                  </div>
-                ) : (
-                  <div className="mb-4">
-                    <div className="flex gap-4 mb-2">
-                      <label className="inline-flex items-center">
-                        <input
-                          type="radio"
-                          value="ticks"
-                          checked={stopLossUnit === 'ticks'}
-                          onChange={(e) => setStopLossUnit(e.target.value)}
-                          className="form-radio h-4 w-4 text-blue-600"
-                        />
-                        <span className={`ml-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Ticks</span>
-                      </label>
-                      <label className="inline-flex items-center">
-                        <input
-                          type="radio"
-                          value="points"
-                          checked={stopLossUnit === 'points'}
-                          onChange={(e) => setStopLossUnit(e.target.value)}
-                          className="form-radio h-4 w-4 text-blue-600"
-                        />
-                        <span className={`ml-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Points</span>
-                      </label>
-                    </div>
-                    <input
-                      type="number"
-                      value={stopLossValue}
-                      onChange={(e) => setStopLossValue(e.target.value)}
-                      className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${
-                        darkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-white text-gray-700 border-gray-300'
-                      }`}
-                      placeholder={`Enter stop loss in ${stopLossUnit}`}
-                    />
-                  </div>
-                )}
-
-                <div className="mb-4">
-                  <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Risk:Reward Ratio
-                  </label>
-                  <select
-                    value={riskReward}
-                    onChange={(e) => setRiskReward(e.target.value)}
-                    className={`shadow border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${
-                      darkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-white text-gray-700 border-gray-300'
-                    }`}
-                  >
-                    <option value="1">1:1</option>
-                    <option value="1.5">1:1.5</option>
-                    <option value="2">1:2</option>
-                    <option value="2.5">1:2.5</option>
-                    <option value="3">1:3</option>
-                    <option value="4">1:4</option>
-                  </select>
-                </div>
-
-                <button
-                  onClick={calculatePositions}
-                  className={`w-full font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${
-                    darkMode 
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                      : 'bg-blue-500 hover:bg-blue-700 text-white'
-                  }`}
+              <div>
+                <label className={`block mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Risk/Reward Ratio
+                </label>
+                <select
+                  value={riskRewardRatio}
+                  onChange={(e) => setRiskRewardRatio(e.target.value)}
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  Calculate
-                </button>
-
-                {results && (
-                  <div className="mt-8">
-                    <h3 className={`text-xl font-bold mb-4 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-                      Position Details ({contractSize} {contractType} contract{contractSize > 1 ? 's' : ''})
-                    </h3>
-
-                    <div className="grid grid-cols-1 gap-4">
-                      <ResultsCard
-                        title="Stop Loss"
-                        points={results.stopLossPoints}
-                        ticks={results.stopLossTicks}
-                        amount={results.stopLossAmount}
-                        isProfit={false}
-                      />
-
-                      <ResultsCard
-                        title="Take Profit"
-                        points={results.takeProfitPoints}
-                        ticks={results.takeProfitTicks}
-                        amount={results.takeProfitAmount}
-                        isProfit={true}
-                      />
-                    </div>
-                  </div>
-                )}
+                  {riskRewardOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
+
+              <button
+                onClick={calculatePositions}
+                className={`w-full font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${
+                  darkMode 
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-blue-500 hover:bg-blue-700 text-white'
+                }`}
+              >
+                Calculate
+              </button>
             </div>
           </div>
+        </div>
+
+        {/* Results Panel */}
+        <div className={`md:w-1/2 ${darkMode ? 'bg-gray-800/90' : 'bg-white/90'} shadow-lg rounded-3xl p-8 backdrop-blur-sm ${
+          results ? 'opacity-100' : 'opacity-50'
+        } transition-opacity duration-200`}>
+          <h2 className={`text-2xl font-bold mb-8 text-center ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+            Position Details
+          </h2>
+
+          {results ? (
+            <>
+              <h3 className={`text-xl font-bold mb-4 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                {contractSize} {contractType} contract{contractSize > 1 ? 's' : ''}
+              </h3>
+
+              <div className="grid grid-cols-1 gap-4">
+                <ResultsCard
+                  title="Stop Loss"
+                  points={results.stopLossPoints}
+                  ticks={results.stopLossTicks}
+                  amount={results.stopLossAmount}
+                  isProfit={false}
+                />
+
+                <ResultsCard
+                  title="Take Profit"
+                  points={results.takeProfitPoints}
+                  ticks={results.takeProfitTicks}
+                  amount={results.takeProfitAmount}
+                  isProfit={true}
+                />
+              </div>
+            </>
+          ) : (
+            <div className={`text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              <p>Enter your position details and click calculate to see results</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
