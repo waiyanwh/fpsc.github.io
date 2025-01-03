@@ -105,7 +105,7 @@ function App() {
             <div className="divide-y divide-gray-200">
               <div className="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
                 <h2 className={`text-2xl font-bold mb-8 text-center ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-                  Position Size Calculator
+                  Future Position Size Calculator
                 </h2>
 
                 <div className="mb-4">
@@ -142,8 +142,8 @@ function App() {
                   </label>
                   <input
                     type="number"
-                    min="0.1"
-                    step="0.1"
+                    min="1"
+                    step="1"
                     value={contractSize}
                     onChange={(e) => setContractSize(e.target.value)}
                     className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${
@@ -161,22 +161,22 @@ function App() {
                     <label className="inline-flex items-center">
                       <input
                         type="radio"
-                        value="dollar"
-                        checked={riskInputType === 'dollar'}
+                        value="usd"
+                        checked={riskInputType === 'usd'}
                         onChange={(e) => setRiskInputType(e.target.value)}
                         className="form-radio h-4 w-4 text-blue-600"
                       />
-                      <span className={`ml-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Dollar Amount</span>
+                      <span className={`ml-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>USD</span>
                     </label>
                     <label className="inline-flex items-center">
                       <input
                         type="radio"
-                        value="distance"
-                        checked={riskInputType === 'distance'}
+                        value="movement"
+                        checked={riskInputType === 'movement'}
                         onChange={(e) => setRiskInputType(e.target.value)}
                         className="form-radio h-4 w-4 text-blue-600"
                       />
-                      <span className={`ml-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Distance</span>
+                      <span className={`ml-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Movement</span>
                     </label>
                   </div>
                 </div>
